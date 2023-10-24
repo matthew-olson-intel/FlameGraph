@@ -112,6 +112,7 @@ my $nameattrfile;               # file holding function attributes
 my $timemax;                    # (override the) sum of the counts
 my $factor = 1;                 # factor to scale counts by
 my $hash = 0;                   # color by function name
+my $md5hash = 0;                # color by function name, with MD5
 my $palette = 0;                # if we use consistent palettes (default off)
 my %palette_map;                # palette map hash
 my $pal_file = "palette.map";   # palette map file name
@@ -146,6 +147,7 @@ USAGE: $0 [options] infile > outfile.svg\n
 	--bgcolors COLOR # set background colors. gradient choices are yellow
 	                 # (default), blue, green, grey; flat colors use "#rrggbb"
 	--hash           # colors are keyed by function name hash
+	--md5hash        # colors are keyed by function name MD5 hash
 	--cp             # use consistent palette (palette.map)
 	--reverse        # generate stack-reversed flame graph
 	--inverted       # icicle graph
@@ -177,6 +179,7 @@ GetOptions(
 	'colors=s'    => \$colors,
 	'bgcolors=s'  => \$bgcolors,
 	'hash'        => \$hash,
+	'md5hash'     => \$md5hash,
 	'cp'          => \$palette,
 	'reverse'     => \$stackreverse,
 	'inverted'    => \$inverted,
@@ -354,6 +357,20 @@ SVG
 	1;
 }
 
+sub md5_namehash {
+	# Generate a random hash for the name string.
+	# This ensures that functions with the same name have the same color,
+	# both within a flamegraph and across multiple flamegraphs without
+	# needing to set a palette and while preserving the original flamegraph
+	# optic, unlike what happens with --hash.
+	my $name = shift;
+	use Digest::MD5 qw(md5);
+	my $str = substr( md5($name), 0, 4 );
+	my $hash = unpack('L', $str);
+	srand($hash);
+	return rand(1)
+}
+
 sub namehash {
 	# Generate a vector hash for the name string, weighting early over
 	# later characters. We want to pick the same colors for function
@@ -382,6 +399,10 @@ sub color {
 	if ($hash) {
 		$v1 = namehash($name);
 		$v2 = $v3 = namehash(scalar reverse $name);
+	} elsif ($md5hash) {
+  	$v1 = md5_namehash($name);
+  	$v2 = md5_namehash($name);
+  	$v3 = md5_namehash($name);
 	} else {
 		$v1 = rand(1);
 		$v2 = rand(1);

@@ -7,6 +7,7 @@
 # changes.
 #
 # Currently only tests stackcollapse-perf.pl.
+BASEDIR=$(cd "${BASH_SOURCE[0]%/*}" && pwd)
 
 set -euo pipefail
 set -x
@@ -16,11 +17,11 @@ set -v
 # tricky since they use addr2line, whose output will vary based on the test
 # system's binaries and symbol tables.
 for opt in pid tid kernel jit all addrs; do
-  for testfile in test/*.txt ; do
+  for testfile in inputs/*.txt ; do
     echo testing $testfile : $opt
     outfile=${testfile#*/}
-    outfile=test/results/${outfile%.txt}"-collapsed-${opt}.txt"
-    perl ./stackcollapse-perf.pl --"${opt}" "${testfile}" 2> /dev/null | diff -u - "${outfile}"
-    perl ./flamegraph.pl "${outfile}" > /dev/null
+    outfile=results/${outfile%.txt}"-collapsed-${opt}.txt"
+    perl ${BASEDIR}/../stackcollapse-perf.pl --"${opt}" "${testfile}" 2> /dev/null | diff -u - "${outfile}"
+    perl ${BASEDIR}/../flamegraph.pl "${outfile}" > /dev/null
   done
 done
