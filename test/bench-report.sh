@@ -7,7 +7,9 @@ BASEDIR=$(cd "${BASH_SOURCE[0]%/*}" && pwd)
 
 set -euo pipefail
 
+########################################
 # User-editables
+########################################
 iters=10
 flame_opts=( "" "--hash" "--md5hash" )
 configs=( "def" "hash" "md5hash" )
