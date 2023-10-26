@@ -10,8 +10,8 @@ set -euo pipefail
 # User-editables
 ########################################
 iters=10
-flame_opts=( "" "--hash" "--md5hash" )
-configs=( "def" "hash" "md5hash" )
+flame_opts=( "" "--hash" "--md5hash" "--simplehash" "--bhash" "--b2hash" )
+configs=( "def" "hash" "md5hash" "simplehash" "bhash" "b2hash" )
 
 # We need to set TIMEFORMAT *before* starting a subshell
 # that uses the BASH `time` builtin. The alternative to using

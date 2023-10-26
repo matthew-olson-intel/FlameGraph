@@ -113,6 +113,9 @@ my $timemax;                    # (override the) sum of the counts
 my $factor = 1;                 # factor to scale counts by
 my $hash = 0;                   # color by function name
 my $md5hash = 0;                # color by function name, with MD5
+my $bhash = 0;                  # color by function name, b
+my $b2hash = 0;                 # color by function name, b2
+my $simplehash = 0;
 my $palette = 0;                # if we use consistent palettes (default off)
 my %palette_map;                # palette map hash
 my $pal_file = "palette.map";   # palette map file name
@@ -148,6 +151,9 @@ USAGE: $0 [options] infile > outfile.svg\n
 	                 # (default), blue, green, grey; flat colors use "#rrggbb"
 	--hash           # colors are keyed by function name hash
 	--md5hash        # colors are keyed by function name MD5 hash
+	--bhash     # colors are keyed by function name hash, b
+	--b2hash    # colors are keyed by function name hash, b2
+  --simplehash
 	--cp             # use consistent palette (palette.map)
 	--reverse        # generate stack-reversed flame graph
 	--inverted       # icicle graph
@@ -180,6 +186,9 @@ GetOptions(
 	'bgcolors=s'  => \$bgcolors,
 	'hash'        => \$hash,
 	'md5hash'     => \$md5hash,
+	'bhash'  => \$bhash,
+	'b2hash' => \$b2hash,
+	'simplehash'  => \$simplehash,
 	'cp'          => \$palette,
 	'reverse'     => \$stackreverse,
 	'inverted'    => \$inverted,
@@ -357,6 +366,32 @@ SVG
 	1;
 }
 
+sub b2_namehash {
+  my $name = shift;
+  use B qw(hash);
+  my $hash = B::hash($name);
+  return (unpack('L', $hash) / 0xFFFFFFFF);
+}
+
+sub b_namehash {
+  my $name = shift;
+  use B qw(hash);
+  my $hash = B::hash($name);
+  srand(unpack('L', $hash));
+  return rand(1);
+}
+
+sub simple_namehash {
+  my $name = shift;
+  my $t = 0;
+  for (my $i = 0; $i > -4; $i--) {
+    my $c = substr $name, $i;
+    $t += ord($c) - 64;
+  }
+  my $z = ($t % 64) / 64;
+  return $z;
+}
+
 sub md5_namehash {
 	# Generate a random hash for the name string.
 	# This ensures that functions with the same name have the same color,
@@ -403,6 +438,18 @@ sub color {
   	$v1 = md5_namehash($name);
   	$v2 = md5_namehash($name);
   	$v3 = md5_namehash($name);
+  } elsif ($bhash) {
+    $v1 = b_namehash($name);
+    $v2 = b_namehash($name);
+    $v3 = b_namehash($name);
+  } elsif ($b2hash) {
+    $v1 = b2_namehash($name);
+    $v2 = b2_namehash($name);
+    $v3 = b2_namehash($name);
+  } elsif ($simplehash) {
+    $v1 = simple_namehash($name);
+    $v2 = simple_namehash($name);
+    $v3 = simple_namehash($name);
 	} else {
 		$v1 = rand(1);
 		$v2 = rand(1);
