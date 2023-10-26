@@ -116,6 +116,8 @@ my $md5hash = 0;                # color by function name, with MD5
 my $bhash = 0;                  # color by function name, b
 my $b2hash = 0;                 # color by function name, b2
 my $simplehash = 0;
+my $sumhash = 0;
+my $xshash = 0;
 my $palette = 0;                # if we use consistent palettes (default off)
 my %palette_map;                # palette map hash
 my $pal_file = "palette.map";   # palette map file name
@@ -154,6 +156,8 @@ USAGE: $0 [options] infile > outfile.svg\n
 	--bhash     # colors are keyed by function name hash, b
 	--b2hash    # colors are keyed by function name hash, b2
   --simplehash
+  --sumhash
+  --xshash
 	--cp             # use consistent palette (palette.map)
 	--reverse        # generate stack-reversed flame graph
 	--inverted       # icicle graph
@@ -189,6 +193,8 @@ GetOptions(
 	'bhash'  => \$bhash,
 	'b2hash' => \$b2hash,
 	'simplehash'  => \$simplehash,
+	'sumhash'     => \$sumhash,
+	'xshash'  => \$xshash,
 	'cp'          => \$palette,
 	'reverse'     => \$stackreverse,
 	'inverted'    => \$inverted,
@@ -381,6 +387,28 @@ sub b_namehash {
   return rand(1);
 }
 
+sub sum_namehash {
+  my $name = shift;
+  srand(unpack("%32W*", $name) % 65535);
+  return rand(1);
+}
+
+sub xs_namehash {
+  my $name = shift;
+  use Inline C => <<'_C_';
+  U32 xs_hashfunc(SV *sv) {
+    STRLEN len;
+    U32 hash = 0;
+    const char *s = SvPVbyte(sv, len);
+    PERL_HASH(hash, s, len);
+    return hash;
+  }
+_C_
+  my $hash = xs_hashfunc($name);
+  srand(unpack('L', $hash));
+  return rand(1);
+}
+
 sub simple_namehash {
   my $name = shift;
   my $t = 0;
@@ -450,6 +478,14 @@ sub color {
     $v1 = simple_namehash($name);
     $v2 = simple_namehash($name);
     $v3 = simple_namehash($name);
+  } elsif ($sumhash) {
+    $v1 = sum_namehash($name);
+    $v2 = sum_namehash($name);
+    $v3 = sum_namehash($name);
+  } elsif ($xshash) {
+    $v1 = xs_namehash($name);
+    $v2 = xs_namehash($name);
+    $v3 = xs_namehash($name);
 	} else {
 		$v1 = rand(1);
 		$v2 = rand(1);

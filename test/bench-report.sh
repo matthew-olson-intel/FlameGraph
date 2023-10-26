@@ -11,8 +11,8 @@ set -euo pipefail
 # User-editables
 ########################################
 iters=10
-flame_opts=( "" "--hash" "--md5hash" "--simplehash" "--bhash" "--b2hash" )
-configs=( "def" "hash" "md5hash" "simplehash" "bhash" "b2hash" )
+flame_opts=( "" "--hash" "--md5hash" "--simplehash" "--bhash" "--b2hash" "--sumhash" "--xshash" )
+configs=( "def" "hash" "md5hash" "simplehash" "bhash" "b2hash" "sumhash" "xshash" )
 
 mkdir -p ${BASEDIR}/bench-results
 
